@@ -1,0 +1,156 @@
+/* ====== СБРОС ====== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ====== BODY ====== */
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Georgia', serif;
+  position: relative;
+  padding: 20px;
+  /* ВАЖНО: НЕ ставим overflow: hidden — иначе фон обрежется */
+  overflow-x: hidden;
+}
+
+/* ====== КОНТЕЙНЕР ДЛЯ ФОНОВЫХ КАРТИНОК ====== */
+#hearts-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* ====== ПАДАЮЩИЕ КАРТИНКИ ====== */
+.bg-img {
+  position: absolute;
+  top: -120px;
+  opacity: 0.85;
+  user-select: none;
+  display: block;
+  visibility: visible;
+  animation-name: floatDown;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: forwards;
+}
+
+@keyframes floatDown {
+  0%   { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(120vh) rotate(360deg); }
+}
+
+/* ====== КАРТОЧКА ====== */
+.card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 45px 35px;
+  max-width: 620px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: appear 1.2s ease-out;
+  position: relative;
+  z-index: 10;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ====== ЗАГОЛОВКИ И ТЕКСТ ====== */
+h1 {
+  color: #ff6b9d;
+  font-size: 2.1em;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(255, 107, 157, 0.5);
+}
+
+.subtitle {
+  color: #b8b8c8;
+  font-style: italic;
+  margin-bottom: 25px;
+}
+
+.text {
+  color: #e8e8e8;
+  font-size: 1.05em;
+  line-height: 1.8;
+  margin: 25px 0;
+}
+
+/* ====== ФОТО ====== */
+.photo-frame {
+  margin: 20px auto;
+  border-radius: 18px;
+  overflow: hidden;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 3px solid rgba(255, 107, 157, 0.3);
+}
+
+.main-photo {
+  width: 100%;
+  display: block;
+  transition: transform 0.4s;
+}
+
+.main-photo:hover { transform: scale(1.05); }
+
+/* ====== МЕМЫ ====== */
+.memes {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0 30px;
+}
+
+.meme {
+  width: 160px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s;
+}
+
+.meme:hover { transform: rotate(-2deg) scale(1.06); }
+
+/* ====== КНОПКА-ССЫЛКА ====== */
+.btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff6b9d, #c44569);
+  color: white;
+  text-decoration: none;
+  padding: 15px 45px;
+  border-radius: 50px;
+  font-size: 1.1em;
+  box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+  transition: all 0.3s;
+}
+
+.btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 35px rgba(255, 107, 157, 0.6);
+}
+
+/* ====== ВЗРЫВ КАРТИНОК ПРИ "ДА" ====== */
+.burst-img {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  animation: burstFall 3s ease-in forwards;
+}
+
+@keyframes burstFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(var(--rot)); opacity: 0; }
+}

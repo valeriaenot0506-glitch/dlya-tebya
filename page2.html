@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Поймай сердечко 💖</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .game-card {
+    text-align: center;
+    position: relative;
+    max-width: 700px;
+  }
+
+  .game-title {
+    color: #ff6b9d;
+    font-size: 2.1em;
+    margin-bottom: 8px;
+    text-shadow: 0 0 25px rgba(255, 107, 157, 0.6);
+  }
+
+  .game-hint {
+    color: #b8b8c8;
+    font-style: italic;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+  }
+
+  #gameArea {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px dashed rgba(255, 107, 157, 0.3);
+    border-radius: 18px;
+    margin: 15px 0;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  .catch-img {
+    position: absolute;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s;
+    animation: bob 2s ease-in-out infinite;
+  }
+  .catch-img:hover { transform: scale(1.15); }
+  .catch-img:active { transform: scale(0.9); }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-10px) rotate(5deg); }
+  }
+
+  .score-board {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 10px 0;
+    font-size: 1.2em;
+  }
+  .score-board span { color: #ff6b9d; font-weight: bold; }
+
+  .pop-msg {
+    position: absolute;
+    color: #ff6b9d;
+    font-weight: bold;
+    font-size: 1.3em;
+    pointer-events: none;
+    animation: popUp 1s ease-out forwards;
+    z-index: 20;
+  }
+  @keyframes popUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+  }
+
+  .win-screen {
+    display: none;
+    animation: popIn 0.6s ease-out;
+  }
+  .win-screen.active { display: block; }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .win-screen h2 {
+    color: #ff6b9d;
+    font-size: 2em;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(255, 107, 157, 0.6);
+  }
+
+  .win-screen .btn { margin-top: 20px; }
+
+  .btn-restart {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8e8e8;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 30px;
+    font-size: 1em;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 15px;
+    transition: all 0.3s;
+  }
+  .btn-restart:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+  }
+
+  .game-hidden { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="hearts-bg"></div>
+
+  <main class="card game-card">
+
+    <div id="gameBlock">
+      <h1 class="game-title">Поймай сердечко 💖</h1>
+      <p class="game-hint">Кликай по картинкам и набирай очки!</p>
+
+      <div class="score-board">
+        <div>Поймано: <span id="score">0</span></div>
+        <div>Осталось: <span id="timeLeft">20</span> сек</div>
+      </div>
+
+      <div id="gameArea"></div>
+    </div>
+
+    <div class="win-screen" id="winScreen">
+      <h2 id="winTitle">Молодец! 🎉</h2>
+      <p class="text" id="winText">Ты поймал сердечки!</p>
+      <a href="page3.html" class="btn">Дальше →</a>
+      <br>
+      <button class="btn-restart" id="btnRestart">Играть ещё 🔄</button>
+    </div>
+
+  </main>
+
+  <script>
+    const gameBlock = document.getElementById('gameBlock');
+    const gameArea = document.getElementById('gameArea');
+    const scoreEl = document.getElementById('score');
+    const timeLeftEl = document.getElementById('timeLeft');
+    const winScreen = document.getElementById('winScreen');
+    const winTitle = document.getElementById('winTitle');
+    const winText = document.getElementById('winText');
+    const btnRestart = document.getElementById('btnRestart');
+
+    // ====== НАСТРОЙКА КАРТИНОК ДЛЯ ИГРЫ ======
+    const IMAGE_START = 6;         // ← с какой цифры начинаются картинки игры
+    const IMAGE_END   = 10;        // ← до какой (включительно)
+    const IMAGE_EXT   = 'jpg';
+    const IMAGE_PATH  = 'image/';  // ← твоя папка
+
+    const GAME_TIME   = 20;        // секунд на игру
+    const SPAWN_EVERY = 700;       // как часто появляются картинки (мс)
+    const TARGET_SCORE = 15;       // сколько нужно набрать для победы
+    // =========================================
+
+    const images = [];
+    for (let i = IMAGE_START; i <= IMAGE_END; i++) {
+      images.push(IMAGE_PATH + i + '.' + IMAGE_EXT);
+    }
+
+    console.log('Картинки для игры:', images);
+
+    let score = 0;
+    let timeLeft = GAME_TIME;
+    let gameRunning = false;
+    let spawnTimer = null;
+    let countdownTimer = null;
+
+    function randomImage() {
+      return images[Math.floor(Math.random() * images.length)];
+    }
+
+    function spawnTarget() {
+      if (!gameRunning) return;
+
+      const areaRect = gameArea.getBoundingClientRect();
+      const img = document.createElement('img');
+      img.src = randomImage();
+      img.className = 'catch-img';
+      img.alt = '';
+
+      img.onerror = () => {
+        console.warn('НЕ НАЙДЕНА КАРТИНКА:', img.src);
+      };
+
+      const size = 50 + Math.random() * 40; // 50–90px
+      const maxX = areaRect.width - size;
+      const maxY = areaRect.height - size;
+
+      img.style.width = size + 'px';
+      img.style.left = (Math.random() * Math.max(0, maxX)) + 'px';
+      img.style.top  = (Math.random() * Math.max(0, maxY)) + 'px';
+
+      img.addEventListener('click', (e) => {
+        if (!gameRunning) return;
+        e.stopPropagation();
+        score++;
+        scoreEl.textContent = score;
+        showPopMsg(e, '+1');
+        img.remove();
+
+        if (score >= TARGET_SCORE) {
+          endGame(true);
+        }
+      });
+
+      gameArea.appendChild(img);
+
+      setTimeout(() => {
+        if (img.parentNode) img.remove();
+      }, 1500);
+    }
+
+    function showPopMsg(e, text) {
+      const rect = gameArea.getBoundingClientRect();
+      const msg = document.createElement('div');
+      msg.className = 'pop-msg';
+      msg.textContent = text;
+      msg.style.left = (e.clientX - rect.left) + 'px';
+      msg.style.top  = (e.clientY - rect.top) + 'px';
+      gameArea.appendChild(msg);
+      setTimeout(() => msg.remove(), 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = GAME_TIME;
+      gameRunning = true;
+      scoreEl.textContent = '0';
+      timeLeftEl.textContent = GAME_TIME;
+
+      gameBlock.classList.remove('game-hidden');
+      winScreen.classList.remove('active');
+      gameArea.innerHTML = '';
+
+      spawnTimer = setInterval(spawnTarget, SPAWN_EVERY);
+
+      countdownTimer = setInterval(() => {
+        timeLeft--;
+        timeLeftEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame(false);
+        }
+      }, 1000);
+    }
+
+    function endGame(win) {
+      gameRunning = false;
+      clearInterval(spawnTimer);
+      clearInterval(countdownTimer);
+      gameArea.innerHTML = '';
+
+      gameBlock.classList.add('game-hidden');
+      winScreen.classList.add('active');
+
+      if (win) {
+        winTitle.textContent = 'Победа! 🎉';
+        winText.textContent = 'Ты поймал ' + score + ' сердечек! Ты невероятный 💖';
+      } else {
+        winTitle.textContent = 'Время вышло! ⏰';
+        winText.textContent = 'Ты поймал ' + score + ' сердечек. Попробуй ещё! 💪';
+      }
+    }
+
+    btnRestart.addEventListener('click', startGame);
+
+    startGame();
+  </script>
+</body>
+</html>

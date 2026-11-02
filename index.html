@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ты меня любишь? ❤️</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .question-card { text-align: center; position: relative; }
+
+  .question {
+    color: #ff6b9d;
+    font-size: 2.4em;
+    margin-bottom: 10px;
+    text-shadow: 0 0 25px rgba(255, 107, 157, 0.6);
+  }
+
+  .hint {
+    color: #b8b8c8;
+    font-style: italic;
+    margin-bottom: 40px;
+    font-size: 0.95em;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: center;
+    min-height: 80px;
+    position: relative;
+  }
+
+  .btn-yes {
+    background: linear-gradient(135deg, #ff6b9d, #c44569);
+    color: white;
+    border: none;
+    padding: 16px 50px;
+    font-size: 1.3em;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 8px 25px rgba(255, 107, 157, 0.5);
+    transition: transform 0.3s;
+  }
+  .btn-yes:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(255, 107, 157, 0.7);
+  }
+
+  .btn-no {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8e8e8;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 16px 50px;
+    font-size: 1.3em;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease-out;
+    z-index: 5;
+  }
+
+  .result { display: none; animation: popIn 0.6s ease-out; }
+  .result.active { display: block; }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .result h2 {
+    color: #ff6b9d;
+    font-size: 2em;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255, 107, 157, 0.6);
+  }
+
+  .result img {
+    max-width: 340px;
+    width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    margin: 15px 0;
+    border: 3px solid rgba(255, 107, 157, 0.4);
+  }
+
+  .result .btn { margin-top: 20px; }
+
+  .question-block.hidden { display: none; }
+</style>
+</head>
+<body>
+
+  <div id="hearts-bg"></div>
+
+  <main class="card question-card">
+
+    <div class="question-block" id="questionBlock">
+      <h1 class="question">Ты меня любишь? 🥺</h1>
+      <p class="hint">(только честно...)</p>
+
+      <div class="buttons" id="buttonsArea">
+        <button class="btn-yes" id="btnYes">Да ❤️</button>
+        <button class="btn-no" id="btnNo">Нет 💔</button>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <h2>Я так и знала! 💖</h2>
+      <img src="image/meme-love.jpg" alt="мем любовь" id="loveMeme">
+      <p class="text">Ты самый лучший, я тебя обожаю 😘</p>
+      <a href="page2.html" class="btn">Дальше →</a>
+    </div>
+
+  </main>
+
+  <audio id="loveSound" src="sounds/love.mp3" preload="auto"></audio>
+
+  <script>
+    const btnYes = document.getElementById('btnYes');
+    const btnNo  = document.getElementById('btnNo');
+    const questionBlock = document.getElementById('questionBlock');
+    const result = document.getElementById('result');
+    const loveSound = document.getElementById('loveSound');
+
+    // ====== НАСТРОЙКА КАРТИНОК ======
+    const IMAGE_COUNT = 5;        // сколько картинок (1.jpg ... 5.jpg)
+    const IMAGE_EXT   = 'jpg';    // расширение
+    const IMAGE_PATH  = 'image/'; // ← ТВОЯ ПАПКА
+
+    const bgImages = [];
+    for (let i = 1; i <= IMAGE_COUNT; i++) {
+      bgImages.push(IMAGE_PATH + i + '.' + IMAGE_EXT);
+    }
+
+    console.log('Ищем картинки:', bgImages);
+
+    const heartsBg = document.getElementById('hearts-bg');
+
+    function randomImage() {
+      return bgImages[Math.floor(Math.random() * bgImages.length)];
+    }
+
+    function spawnBgImage() {
+      const img = document.createElement('img');
+      img.src = randomImage();
+      img.className = 'bg-img';
+      img.alt = '';
+
+      img.onerror = () => {
+        console.warn('НЕ НАЙДЕНА КАРТИНКА:', img.src);
+      };
+
+      const size = 60 + Math.random() * 80;       // ← СРЕДНИЕ: 60–140px
+      const duration = 8 + Math.random() * 10;    // 8–18 сек
+      const startX = Math.random() * 90;          // 0–90vw
+
+      img.style.left = startX + 'vw';
+      img.style.width = size + 'px';
+      img.style.animationDuration = duration + 's';
+
+      heartsBg.appendChild(img);
+
+      setTimeout(() => img.remove(), duration * 1000 + 1000);
+    }
+
+    setInterval(spawnBgImage, 800);   // ← 800мс
+
+    // Первый залп
+    for (let i = 0; i < 10; i++) {
+      setTimeout(spawnBgImage, i * 200);
+    }
+
+    // ==== Кнопка "Нет" убегает ====
+    let noCount = 0;
+    const noTexts = [
+      'Нет 💔', 'Точно нет? 🥺', 'Подумай ещё...', 'Ну пожалуйста 😢',
+      'Ты уверен?', 'Не может быть!', 'Ладно, нажми "Да" 😤'
+    ];
+
+    let offsetX = 0, offsetY = 0;
+    btnNo.style.transition = 'transform 0.35s ease-out';
+    btnNo.style.willChange = 'transform';
+
+    function runAway(e) {
+      let mouseX, mouseY;
+      if (e.touches && e.touches[0]) {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+      } else {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }
+
+      const rect = btnNo.getBoundingClientRect();
+      const btnCenterX = rect.left + rect.width / 2;
+      const btnCenterY = rect.top + rect.height / 2;
+
+      let dx = btnCenterX - mouseX;
+      let dy = btnCenterY - mouseY;
+
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+        const angle = Math.random() * Math.PI * 2;
+        dx = Math.cos(angle);
+        dy = Math.sin(angle);
+      }
+
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const distance = 90;
+      dx = (dx / len) * distance;
+      dy = (dy / len) * distance;
+
+      offsetX += dx;
+      offsetY += dy;
+
+      const maxOffset = 160;
+      offsetX = Math.max(-maxOffset, Math.min(maxOffset, offsetX));
+      offsetY = Math.max(-maxOffset, Math.min(maxOffset, offsetY));
+
+      btnNo.style.transform =
+        'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' +
+        Math.max(0.7, 1 - noCount * 0.04) + ')';
+
+      noCount++;
+      btnNo.textContent = noTexts[Math.min(noCount, noTexts.length - 1)];
+    }
+
+    btnNo.addEventListener('mouseenter', runAway);
+    btnNo.addEventListener('mousemove', (e) => {
+      const rect = btnNo.getBoundingClientRect();
+      const pad = 10;
+      if (
+        e.clientX > rect.left - pad && e.clientX < rect.right + pad &&
+        e.clientY > rect.top - pad && e.clientY < rect.bottom + pad
+      ) {
+        runAway(e);
+      }
+    });
+
+    btnNo.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      runAway(e);
+    }, { passive: false });
+
+    btnNo.addEventListener('click', (e) => {
+      e.preventDefault();
+      runAway(e);
+    });
+
+    // ==== Кнопка "Да" ====
+    btnYes.addEventListener('click', () => {
+      loveSound.play().catch(() => {});
+      questionBlock.classList.add('hidden');
+      result.classList.add('active');
+      burstImages();
+    });
+
+    function burstImages() {
+      for (let i = 0; i < 25; i++) {
+        const img = document.createElement('img');
+        img.src = randomImage();
+        img.className = 'burst-img';
+        img.alt = '';
+        img.style.left = (Math.random() * 100) + 'vw';
+        img.style.top = '-60px';
+        img.style.width = (25 + Math.random() * 35) + 'px';
+        img.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+        img.style.animationDelay = (Math.random() * 0.4) + 's';
+        document.body.appendChild(img);
+        setTimeout(() => img.remove(), 3500);
+      }
+    }
+  </script>
+</body>
+</html>
